@@ -162,7 +162,8 @@ impl Solver {
 
     fn solve(&mut self, src_state: &State, dst_state: &State, initial_moves: String) -> Vec<String> {
         
-        let initial_moves: Vec<&str> = initial_moves.split(".").into_iter().collect();
+        let initial_moves: Vec<&str> = initial_moves.trim().split(".").into_iter().filter(|&s| !s.is_empty()).collect();
+
         let mut tables: [HashMap<HashValue, usize>; 2] = [HashMap::new(), HashMap::new()];
         let mut queues = [VecDeque::new(), VecDeque::new()];
         dbg!(self.moves.len());
@@ -272,14 +273,17 @@ struct Args {
     #[arg(short, long)]
     problem_id: i32,
 
+
+    #[arg(short, long)]
+    data_dir: String,
+
     #[arg(short, long, default_value_t = String::new())]
     initial_moves: String
 }
 
 fn main() -> Result<(), Error> {
-
-    let data_dir = Path::new("../data");
-
+    let args = Args::parse();
+    let data_dir = Path::new(&args.data_dir);
     let puzzle_info_path = data_dir.join("puzzle_info.csv");
     let mut puzzle_info_file = File::open(puzzle_info_path).expect("Failed to open puzzle_info_path");
     let mut puzzle_info_data = String::new();
@@ -305,7 +309,6 @@ fn main() -> Result<(), Error> {
         puzzles.insert(puzzle_id, puzzle);
     }
 
-    let args = Args::parse();
     let serialized_puzzle = puzzles.get(&args.problem_id).expect("Unknown puzzle_id");
     let puzzle = deserialized_puzzle(serialized_puzzle);
     let moves = puzzle_infos.get(&puzzle.puzzle_type).expect("Unknown puzzle type").allowed_moves.clone();
